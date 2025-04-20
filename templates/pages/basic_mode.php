@@ -15,7 +15,7 @@
     <?php
     // Configure and include the dropzone partial for basic mode
     $formId = 'basic-dropzone'; // Matches JS selector
-    $actionUrl = '/?action=optimize'; // Default action for basic mode
+    $actionUrl = '?action=optimize'; // Default action for basic mode
     // $clickableId = 'basic-dropzone-clickable'; // Optional: If you want a specific clickable area ID
     // $dropzoneMessage = 'Drop files here to optimize'; // Optional: Custom message
 

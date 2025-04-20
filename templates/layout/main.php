@@ -61,6 +61,10 @@ $footerTemplate = dirname(__DIR__) . '/layout/footer.php';
         echo "<!-- Footer missing -->";
     }
     ?>
+<script>
+    // Make PHP's APP_BASE_PATH available to JavaScript
+    var APP_BASE_PATH = '<?php echo APP_BASE_PATH; ?>';
+</script>
 
     <!-- Vendor JavaScript -->
     <script src="<?php echo APP_BASE_PATH; ?>/js/vendor/jquery.min.js"></script>

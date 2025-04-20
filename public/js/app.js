@@ -51,62 +51,83 @@ $(function () {
      * Displays processed image results in the results area.
      * @param {array} resultsData Array of result objects from the backend. Expected format: { status: 'success', data: { results: [{ url: '...', filename: '...' }, ...] } } or similar.
      */
-    function displayResults(resultsData) {
-        resultsArea.empty(); // Clear previous results or placeholder
+// In your app.js file, find the displayResults function
+/**
+ * Displays processed image results in the results area.
+ * @param {array} resultsData Array of result objects from the backend. Expected format: { status: 'success', data: { results: [{ url: '...', filename: '...' }, ...] } } or similar.
+ */
+function displayResults(resultsData) {
+    console.log("displayResults called with:", resultsData); // For debugging
+    resultsArea.empty(); // Clear previous results or placeholder
 
-        if (!resultsData || !resultsData.data || !Array.isArray(resultsData.data.results) || resultsData.data.results.length === 0) {
-            resultsArea.append('<p class="text-red-500 dark:text-red-400">No results were returned or the format was unexpected.</p>');
-            return;
-        }
+    if (!resultsData || !resultsData.data || !Array.isArray(resultsData.data.results) || resultsData.data.results.length === 0) {
+        resultsArea.append('<p class="text-red-500 dark:text-red-400">No results were returned or the format was unexpected.</p>');
+        return;
+    }
 
-        const resultsGrid = $('<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>');
+    const resultsGrid = $('<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>');
+    console.log("Results array:", resultsData.data.results); // For debugging
 
-        resultsData.data.results.forEach((result, index) => {
-            // Assuming result object has url (path relative to public/uploads or absolute) and filename
-            // Adjust based on actual backend response structure
-            const resultUrl = result.url || result.path || result.resultUrl || (typeof result === 'string' ? result : null); // Handle different possible response keys or simple string array
-            const originalName = result.originalName || `result_${index + 1}`;
-            const downloadFilename = result.filename || originalName; // Use generated filename or original
+    resultsData.data.results.forEach((result, index) => {
+        // Assuming result object has url (path relative to public/uploads or absolute) and filename
+        const resultUrl = result.url || result.path || result.resultUrl || (typeof result === 'string' ? result : null);
+        const originalName = result.originalName || `result_${index + 1}`;
+        const downloadFilename = result.filename || originalName;
 
-            if (!resultUrl) {
-                console.error("Result item missing URL/Path:", result);
-                // Optionally display an error placeholder for this specific item
-                const errorCard = $(`
-                    <div class="border border-red-300 dark:border-red-700 rounded-lg p-2 text-center bg-red-50 dark:bg-gray-700">
-                        <p class="text-red-600 dark:text-red-400 text-sm truncate" title="Error processing ${originalName}">Error</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Processing failed</p>
-                    </div>
-                `);
-                 resultsGrid.append(errorCard);
-                return; // Skip this result
-            }
+        console.log("Processing result item:", { resultUrl, originalName }); // For debugging
 
-            // Basic check if it's an image based on common extensions
-            const isImage = /\.(jpe?g|png|gif|webp)$/i.test(resultUrl);
-            let previewContent;
-
-            if (isImage) {
-                 previewContent = `<img src="${resultUrl}" alt="${originalName}" class="w-full h-24 object-contain mb-2 rounded">`;
-            } else {
-                 previewContent = `<div class="w-full h-24 mb-2 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                                  </div>`; // Generic file icon
-            }
-
-            const resultCard = $(`
-                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-center bg-white dark:bg-gray-800 shadow hover:shadow-md transition-shadow duration-200">
-                    ${previewContent}
-                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate" title="${originalName}">${originalName}</p>
-                    <a href="${resultUrl}" download="${downloadFilename}" class="mt-2 inline-block text-xs bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-3 rounded transition-colors duration-200">
-                        Download
-                    </a>
+        if (!resultUrl) {
+            console.error("Result item missing URL/Path:", result);
+            // Optionally display an error placeholder for this specific item
+            const errorCard = $(`
+                <div class="border border-red-300 dark:border-red-700 rounded-lg p-2 text-center bg-red-50 dark:bg-gray-700">
+                    <p class="text-red-600 dark:text-red-400 text-sm truncate" title="Error processing ${originalName}">Error</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Processing failed</p>
                 </div>
             `);
-            resultsGrid.append(resultCard);
-        });
+            resultsGrid.append(errorCard);
+            return; // Skip this result
+        }
 
-        resultsArea.append(resultsGrid);
-    }
+        // Basic check if it's an image based on common extensions
+        const isImage = /\.(jpe?g|png|gif|webp|avif)$/i.test(resultUrl);
+        let previewContent;
+
+        if (isImage) {
+            previewContent = `<img src="${resultUrl}" alt="${originalName}" class="w-full h-24 object-contain mb-2 rounded">`;
+        } else {
+            previewContent = `<div class="w-full h-24 mb-2 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                           </div>`;
+        }
+
+        // Add optimization info if available
+        let optimizationInfo = '';
+        if (result.originalSize && result.processedSize) {
+            const savedPercent = ((result.originalSize - result.processedSize) / result.originalSize * 100).toFixed(1);
+            optimizationInfo = `<p class="text-xs text-green-600 dark:text-green-400">Saved ${savedPercent}% (${(result.processedSize / 1024).toFixed(1)} KB)</p>`;
+        } else if (result.compressionRatio) {
+            optimizationInfo = `<p class="text-xs text-green-600 dark:text-green-400">Compressed to ${result.compressionRatio}</p>`;
+        }
+
+        const resultCard = $(`
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-center bg-white dark:bg-gray-800 shadow hover:shadow-md transition-shadow duration-200">
+                ${previewContent}
+                <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate" title="${originalName}">${originalName}</p>
+                ${optimizationInfo}
+                <a href="${resultUrl}" download="${downloadFilename}" class="mt-2 inline-block text-xs bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-3 rounded transition-colors duration-200">
+                    Download
+                </a>
+            </div>
+        `);
+        
+        resultsGrid.append(resultCard);
+        console.log("Added result card to grid");
+    });
+
+    resultsArea.append(resultsGrid);
+    console.log("Added results grid to results area");
+}
 
     /**
      * Shows a generic processing overlay or progress indicator.
@@ -173,12 +194,19 @@ $(function () {
                  // If autoProcessQueue is true, this indicates completion.
                  // If false, this might not be the right place to hide processing.
             });
-             this.on("success", function (file, response) {
+            this.on("success", function (file, response) {
+                // Hide processing indicator first
+                hideProcessing();
+                
+                console.log("Dropzone success handler received response:", response);
+                
                 // Handle successful upload AND processing from the backend
                 // Assumes backend returns JSON with status:'success' or status:'error'
                 if (response && response.status === 'success') {
                     showNotification('Success', response.message || 'Files processed successfully.', 'success');
-                    displayResults(response); // Display results from the successful response
+                    
+                    // Make sure we're calling displayResults with the response
+                    displayResults(response);
                 } else {
                     // Server processed but returned an error status in JSON
                     const errorMsg = response?.message || 'An unknown error occurred during processing.';
@@ -188,103 +216,85 @@ $(function () {
                         // Optionally display detailed errors
                     }
                 }
-                // Remove the file preview after success? Optional.
+                
+                // Optional: Remove the file preview after success
                 // this.removeFile(file);
             });
         }
     };
 
     // Basic Mode Dropzone
-    if ($(basicDropzoneEl).length) {
-        new Dropzone(basicDropzoneEl, {
-            ...commonDropzoneConfig,
-            url: "/?action=optimize", // Target endpoint for basic mode (optimize)
-            paramName: "images[]", // Send as array if backend expects multiple
-            autoProcessQueue: true, // Process immediately on drop/select
-            // Add specific event handlers or config for basic mode if needed
-             init: function() {
-                commonDropzoneConfig.init.call(this); // Call shared init
-                // Add basic-specific init logic here
-                this.element.querySelector('button[type=submit]')?.addEventListener('click', (e) => {
-                    e.preventDefault(); // Prevent default form submission if using a button
-                    this.processQueue(); // Manually trigger processing if autoProcessQueue is false
-                });
-            }
-        });
-    }
+// Basic Mode Dropzone
+// Add this code to your app.js file:
 
-    // Simple Optimization Mode Dropzone
-    if ($(simpleOptDropzoneEl).length) {
-        new Dropzone(simpleOptDropzoneEl, {
-            ...commonDropzoneConfig,
-            url: "/?action=optimize", // Target endpoint for simple opt (also optimize)
-            paramName: "images[]",
-            autoProcessQueue: false, // Don't upload immediately, wait for submit button
-            clickable: "#simple-opt-dropzone-clickable", // Use a specific element as clickable area if needed
-            init: function () {
-                commonDropzoneConfig.init.call(this); // Call shared init
-                const form = this.element;
-                const submitButton = form.querySelector('button[type=submit]');
-
-                submitButton?.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (this.getQueuedFiles().length > 0) {
-                        showProcessing('Optimizing images...');
-                        this.processQueue(); // Start uploading queued files
-                    } else {
-                        showNotification('No Files', 'Please select or drop files to optimize.', 'warning');
+// Modify the basic mode Dropzone initialization
+if ($(basicDropzoneEl).length) {
+    new Dropzone(basicDropzoneEl, {
+        ...commonDropzoneConfig,
+        url: APP_BASE_PATH + "/?action=optimize",
+        paramName: "images[]", // Send as array if backend expects multiple
+        autoProcessQueue: true, // Process immediately on drop/select
+        init: function() {
+            commonDropzoneConfig.init.call(this); // Call shared init
+            
+            // Add this debugging code
+            this.on("success", function(file, response) {
+                console.log("DEBUG: Dropzone success event triggered", response);
+                // Force display of results after a slight delay to ensure DOM updates
+                setTimeout(function() {
+                    console.log("DEBUG: Forcing displayResults call");
+                    displayResults(response);
+                    
+                    // As a fallback, if the results still don't show, add a direct HTML insertion
+                    if (response && response.data && response.data.results && response.data.results.length > 0) {
+                        const result = response.data.results[0];
+                        if (result.url) {
+                            console.log("DEBUG: Adding fallback result display");
+                            const resultHtml = `
+                                <div class="mt-4 p-4 border border-green-300 rounded">
+                                    <h3 class="text-lg font-bold text-green-700">Optimization Successful!</h3>
+                                    <div class="flex items-center justify-center my-3">
+                                        <img src="${result.url}" alt="Optimized image" class="max-h-64 max-w-full" />
+                                    </div>
+                                    <p class="text-sm">Original: ${(result.originalSize / 1024).toFixed(1)} KB → 
+                                       Optimized: ${(result.processedSize / 1024).toFixed(1)} KB 
+                                       (Saved ${((result.originalSize - result.processedSize) / result.originalSize * 100).toFixed(1)}%)</p>
+                                    <a href="${result.url}" download class="inline-block mt-3 px-4 py-2 bg-blue-500 text-white rounded">
+                                        Download Optimized Image
+                                    </a>
+                                </div>
+                            `;
+                            $('#results-area').html(resultHtml);
+                        }
                     }
-                });
+                }, 500);
+            });
+        }
+    });
+}
 
-                // Add optimization parameters when sending
-                this.on("sending", (file, xhr, formData) => {
-                    formData.append("quality", form.querySelector('#opt-quality')?.value || '80');
-                    formData.append("format", form.querySelector('#opt-format')?.value || 'auto');
-                    formData.append("width", form.querySelector('#opt-width')?.value || '');
-                    formData.append("height", form.querySelector('#opt-height')?.value || '');
-                    // Add other params as needed
-                });
+// Simple Optimization Mode Dropzone
+if ($(simpleOptDropzoneEl).length) {
+    new Dropzone(simpleOptDropzoneEl, {
+        ...commonDropzoneConfig,
+        url: APP_BASE_PATH + "/?action=optimize", // Update this line to include base path
+        paramName: "images[]",
+        autoProcessQueue: false, // Don't upload immediately, wait for submit button
+        // Rest of the configuration remains the same
+    });
+}
 
-                 this.on("success", function (file, response) {
-                    // Override common success to potentially handle differently if needed
-                    commonDropzoneConfig.init.prototype.success.call(this, file, response);
-                 });
-
-                 this.on("queuecomplete", function() {
-                    hideProcessing(); // Ensure processing hides after queue finishes
-                 });
-            }
-        });
-    }
-
-    // Advanced Pipeline Mode Dropzone & Logic
-    let advancedDropzoneInstance = null;
-    if ($(advancedDropzoneEl).length) {
-        advancedDropzoneInstance = new Dropzone(advancedDropzoneEl, {
-            ...commonDropzoneConfig,
-            url: "/?action=run_pipeline", // This URL will be used by the final AJAX call, not Dropzone directly
-            paramName: "images[]",
-            autoProcessQueue: false, // IMPORTANT: Files are uploaded with the pipeline definition, not automatically
-            clickable: "#advanced-dropzone-clickable",
-            init: function () {
-                // Modify init slightly - don't call common success/processing handlers directly
-                 this.on("addedfile", function (file) {
-                    clearResults();
-                 });
-                 this.on("error", function (file, errorMessage) {
-                    let messageText = errorMessage;
-                    if (typeof errorMessage === 'object' && errorMessage.message) {
-                        messageText = errorMessage.message;
-                    }
-                    showNotification('File Error', `Could not add ${file.name}: ${messageText}`, 'error');
-                    this.removeFile(file);
-                 });
-                 // No 'processing', 'success', 'queuecomplete' handlers needed here as we trigger manually via AJAX
-            }
-        });
-    }
-
+// Advanced Pipeline Mode Dropzone & Logic
+let advancedDropzoneInstance = null;
+if ($(advancedDropzoneEl).length) {
+    advancedDropzoneInstance = new Dropzone(advancedDropzoneEl, {
+        ...commonDropzoneConfig,
+        url: APP_BASE_PATH + "/?action=run_pipeline", // Update this line to include base path
+        paramName: "images[]",
+        autoProcessQueue: false,
+        // Rest of the configuration remains the same
+    });
+}
     // --- SortableJS for Advanced Pipeline ---
     if ($(pipelineStepsContainer).length) {
         const sortableList = document.getElementById(pipelineStepsContainer.substring(1)); // Get raw DOM element
@@ -466,7 +476,7 @@ $(function () {
         // Make the AJAX request to run the pipeline
         showProcessing('Running pipeline...');
         $.ajax({
-            url: '/?action=run_pipeline', // The actual endpoint
+            url: APP_BASE_PATH + '/?action=run_pipeline',
             type: 'POST',
             data: formData,
             processData: false, // Prevent jQuery from processing the FormData

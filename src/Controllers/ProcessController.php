@@ -89,50 +89,57 @@ class ProcessController
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->errorResponse('Invalid request method. Only POST is allowed.', 405);
         }
-
-        if (empty($_FILES['images'])) { // Assuming files are uploaded with field name 'images'
-             $this->errorResponse('No image files provided.', 400);
+    
+        // Check for files under either 'images' or 'file' field names
+        $uploadedFiles = null;
+        if (!empty($_FILES['images'])) {
+            $uploadedFiles = $_FILES['images'];
+        } else if (!empty($_FILES['file'])) {
+            $uploadedFiles = $_FILES['file'];
+        } else {
+            echo "<pre>ERROR: No image files provided in \$_FILES. Contents: " . print_r($_FILES, true) . "</pre>";
+            $this->errorResponse('No image files provided.', 400);
         }
-
-        $uploadedFiles = $_FILES['images'];
+    
         $params = $_POST; // Get optimization parameters (quality, format, etc.)
-
+    
         // 1. Validate uploaded files (using Validator)
         $validationErrors = $this->validator->validateImageUploads($uploadedFiles);
         if (!empty($validationErrors)) {
             $this->errorResponse('Invalid file uploads.', 400, ['errors' => $validationErrors]);
         }
-
+    
         // 2. Validate parameters (using Validator)
         $paramErrors = $this->validator->validateOptimizationParams($params);
-         if (!empty($paramErrors)) {
+        if (!empty($paramErrors)) {
             $this->errorResponse('Invalid optimization parameters.', 400, ['errors' => $paramErrors]);
         }
-
+    
         try {
             // 3. Process uploads (using FileHandler to move to a temporary processing location)
             // FileHandler should return structured data about saved files (e.g., path, original name)
             $processedFilesInfo = $this->fileHandler->processUploads($uploadedFiles);
             if (empty($processedFilesInfo)) {
-                 $this->errorResponse('Failed to process uploaded files.', 500);
+                $this->errorResponse('Failed to process uploaded files.', 500);
             }
-
+    
             // 4. Call the Optimization Service
             // Pass file paths and validated parameters
             $results = $this->optimizationService->optimizeImages($processedFilesInfo, $params);
-
+    
             // 5. Handle results (potentially clean up original uploads if needed)
             // FileHandler might have a cleanup method
-
+    
             // 6. Return success response with paths/data of optimized images
             $this->successResponse(['results' => $results], 'Images optimized successfully.');
-
+    
         } catch (\Exception $e) {
-            // Log the exception $e->getMessage() in a real application
-            $this->errorResponse('An internal error occurred during optimization.', 500);
+            // Log the exception for debugging
+            error_log('Optimization Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine());
+            echo "<pre>ERROR: " . $e->getMessage() . "\nTrace: " . $e->getTraceAsString() . "</pre>";
+            $this->errorResponse('An internal error occurred during optimization: ' . $e->getMessage(), 500);
         }
     }
-
     /**
      * Handles background removal requests.
      */

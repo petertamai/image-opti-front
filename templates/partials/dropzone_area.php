@@ -25,7 +25,7 @@ $formClasses = $formClasses ?? '';
 ?>
 
 <!-- Dropzone Upload Form -->
-<form action="<?php echo htmlspecialchars($actionUrl, ENT_QUOTES, 'UTF-8'); ?>"
+<form action="<?php echo APP_BASE_PATH . htmlspecialchars($actionUrl, ENT_QUOTES, 'UTF-8'); ?>"
       id="<?php echo htmlspecialchars($formId, ENT_QUOTES, 'UTF-8'); ?>"
       class="dropzone border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center bg-gray-50 dark:bg-gray-700 hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer <?php echo htmlspecialchars($formClasses, ENT_QUOTES, 'UTF-8'); ?>"
       method="POST"

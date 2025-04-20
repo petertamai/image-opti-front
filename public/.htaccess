@@ -1,12 +1,28 @@
-# .htaccess for /home/adam/webapps/scripts/public/opti/public/
+# Main .htaccess for /home/adam/webapps/scripts/public/
+Options -Indexes
+RewriteEngine On
 
-# Disable directory listing
-<IfModule mod_autoindex.c>
-    Options -Indexes
+# --- Rules for the /opti/ application ---
+
+# Optional: Redirect /opti to /opti/ (adds trailing slash)
+RewriteRule ^opti$ /opti/ [R=301,L]
+
+# First, handle static assets by checking if the file exists in the public directory
+RewriteCond %{REQUEST_URI} ^/opti/(.+)
+RewriteCond %{DOCUMENT_ROOT}/opti/public/%1 -f
+RewriteRule ^opti/(.+)$ /opti/public/$1 [L]
+
+# For /opti/ with or without query string, route to front controller
+RewriteRule ^opti/?$ /opti/public/index.php [L,QSA]
+
+# For any other /opti/ requests that don't match a file, also send to front controller
+RewriteCond %{REQUEST_URI} ^/opti/
+RewriteRule ^opti/(.*)$ /opti/public/index.php [L,QSA]
+# Enable PHP error display (FOR DEBUGGING ONLY)
+php_flag display_errors on
+php_value error_reporting E_ALL
+<IfModule mod_headers.c>
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires "Thu, 01 Jan 1970 00:00:00 GMT"
 </IfModule>
-
-# --- NO RewriteBase needed here ---
-# --- NO Front Controller RewriteRule needed here (handled by parent .htaccess) ---
-
-# Optional security enhancements can go here if needed
-# e.g., denying access to specific file types if they shouldn't be served directly

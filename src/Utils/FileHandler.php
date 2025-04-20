@@ -84,12 +84,13 @@ class FileHandler
      */
     public function processUpload(array $fileUploadEntry): ?array
     {
+        
         // Check for upload errors provided by PHP
         if (!isset($fileUploadEntry['error']) || is_array($fileUploadEntry['error'])) {
-             error_log("FileHandler Error: Invalid upload data structure passed to processUpload.");
+            error_log("FileHandler Error: Invalid upload data structure passed to processUpload.");
             return null;
         }
-
+    
         switch ($fileUploadEntry['error']) {
             case UPLOAD_ERR_OK:
                 break; // Continue processing
@@ -98,44 +99,56 @@ class FileHandler
                 return null;
             case UPLOAD_ERR_INI_SIZE:
             case UPLOAD_ERR_FORM_SIZE:
-                 error_log("FileHandler Error: Upload failed for '{$fileUploadEntry['name']}'. File too large (UPLOAD_ERR_INI_SIZE/UPLOAD_ERR_FORM_SIZE).");
+                error_log("FileHandler Error: Upload failed for '{$fileUploadEntry['name']}'. File too large (UPLOAD_ERR_INI_SIZE/UPLOAD_ERR_FORM_SIZE).");
                 return null; // Or throw specific exception
             default:
-                 error_log("FileHandler Error: Unknown upload error for '{$fileUploadEntry['name']}'. Code: {$fileUploadEntry['error']}.");
+                error_log("FileHandler Error: Unknown upload error for '{$fileUploadEntry['name']}'. Code: {$fileUploadEntry['error']}.");
                 return null; // Or throw specific exception
         }
-
+    
         // Check file size against application limit
         if ($fileUploadEntry['size'] > self::MAX_FILE_SIZE) {
-             error_log("FileHandler Error: Upload failed for '{$fileUploadEntry['name']}'. File exceeds application size limit ({$fileUploadEntry['size']} bytes).");
+            error_log("FileHandler Error: Upload failed for '{$fileUploadEntry['name']}'. File exceeds application size limit ({$fileUploadEntry['size']} bytes).");
             return null;
         }
-
+    
         // Check MIME type (more reliable than extension)
         if (empty($fileUploadEntry['tmp_name']) || !is_readable($fileUploadEntry['tmp_name'])) {
-             error_log("FileHandler Error: Uploaded file '{$fileUploadEntry['name']}' temporary data is missing or not readable at '{$fileUploadEntry['tmp_name']}'.");
-             return null;
+            error_log("FileHandler Error: Uploaded file '{$fileUploadEntry['name']}' temporary data is missing or not readable at '{$fileUploadEntry['tmp_name']}'.");
+            return null;
         }
+        
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mimeType = finfo_file($finfo, $fileUploadEntry['tmp_name']);
         finfo_close($finfo);
-
+    
         if ($mimeType === false || !in_array($mimeType, self::ALLOWED_MIME_TYPES, true)) {
-             error_log("FileHandler Error: Upload failed for '{$fileUploadEntry['name']}'. Invalid MIME type: '{$mimeType}'.");
+            error_log("FileHandler Error: Upload failed for '{$fileUploadEntry['name']}'. Invalid MIME type: '{$mimeType}'.");
             return null;
         }
-
+    
         // Generate a unique filename and destination path
         $originalName = basename($fileUploadEntry['name']); // Use basename for basic security
         $uniqueFilename = $this->generateUniqueFilename($originalName, 'upload');
         $destinationPath = $this->uploadDir . $uniqueFilename;
-
+        
+        // Check if uploads directory exists and is writable
+        
+        // Try to create directory if it doesn't exist
+        if (!is_dir($this->uploadDir)) {
+            if (!mkdir($this->uploadDir, 0775, true)) {
+                error_log("FileHandler Error: Failed to create upload directory: {$this->uploadDir}");
+                return null;
+            }
+        }
+    
         // Move the uploaded file from temporary location
         if (!move_uploaded_file($fileUploadEntry['tmp_name'], $destinationPath)) {
-             error_log("FileHandler Error: Failed to move uploaded file '{$fileUploadEntry['name']}' from '{$fileUploadEntry['tmp_name']}' to '{$destinationPath}'. Check permissions and paths.");
+            error_log("FileHandler Error: Failed to move uploaded file '{$fileUploadEntry['name']}' from '{$fileUploadEntry['tmp_name']}' to '{$destinationPath}'. Check permissions and paths.");
             return null;
         }
-
+    
+        
         // Return structured info about the saved file including the URL
         return [
             'path' => $destinationPath, // Absolute server path (for internal processing)
@@ -156,19 +169,23 @@ class FileHandler
      */
     public function processUploads(array $filesUploadEntry): array
     {
+        
         $processedFiles = [];
         // Check if the structure is for multiple files
         if (!isset($filesUploadEntry['name']) || !is_array($filesUploadEntry['name'])) {
-            error_log("FileHandler Error: Invalid input to processUploads, expected multiple file upload structure.");
-            // Optionally handle as single upload if appropriate for the context
-            // $singleResult = $this->processUpload($filesUploadEntry);
-            // return $singleResult ? [$singleResult] : [];
-            return [];
+            // Handle as single file
+            $singleResult = $this->processUpload($filesUploadEntry);
+            if ($singleResult !== null) {
+                $processedFiles[] = $singleResult;
+            } else {
+                error_log("FileHandler Error: Failed to process single file upload");
+            }
+            return $processedFiles;
         }
-
+    
         $numFiles = count($filesUploadEntry['name']);
         $fileKeys = array_keys($filesUploadEntry); // ['name', 'type', 'tmp_name', 'error', 'size']
-
+    
         for ($i = 0; $i < $numFiles; $i++) {
             // Reconstruct the single file array structure for processUpload method
             $singleFileEntry = [];
@@ -182,22 +199,21 @@ class FileHandler
                     error_log("FileHandler Warning: Missing key '{$key}' for file index {$i} in processUploads.");
                 }
             }
-
+    
             // Skip empty file inputs often created by browsers if error is UPLOAD_ERR_NO_FILE
             if (($singleFileEntry['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
                 continue;
             }
-
+    
             // Process each file individually
             $result = $this->processUpload($singleFileEntry);
             if ($result !== null) {
                 $processedFiles[] = $result;
             } else {
-                // Log failure for this specific file (processUpload already logs details)
                 error_log("FileHandler Info: Failed to process file '{$singleFileEntry['name']}' during multiple upload.");
             }
         }
-
+    
         return $processedFiles; // Contains entries with 'url' field
     }
 
