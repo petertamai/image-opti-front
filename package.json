@@ -1,0 +1,21 @@
+{
+    "name": "imgtasks-simplified",
+    "version": "1.0.0",
+    "description": "Simplified image processing web application using PHP and Tailwind CSS.",
+    "scripts": {
+      "build:css": "tailwindcss -o ./public/css/style.css --minify",
+      "watch:css": "tailwindcss -o ./public/css/style.css --watch"
+    },
+    "keywords": [
+      "php",
+      "tailwind",
+      "image-processing"
+    ],
+    "author": "Your Name or Organization",
+    "license": "MIT",
+    "devDependencies": {
+      "autoprefixer": "^10.4.19",
+      "postcss": "^8.4.38",
+      "tailwindcss": "^3.4.3"
+    }
+  }

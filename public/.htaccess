@@ -1,0 +1,12 @@
+# .htaccess for /home/adam/webapps/scripts/public/opti/public/
+
+# Disable directory listing
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>
+
+# --- NO RewriteBase needed here ---
+# --- NO Front Controller RewriteRule needed here (handled by parent .htaccess) ---
+
+# Optional security enhancements can go here if needed
+# e.g., denying access to specific file types if they shouldn't be served directly
